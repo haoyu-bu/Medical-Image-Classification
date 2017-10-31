@@ -1,0 +1,30 @@
+# ===================
+# solver configuration
+# ====================
+
+# number of gpus to use, this will be ignored if we're not using multi-gpu training
+num_gpus: 5
+num_epochs: 10
+num_samples_per_epoch: 50000
+
+# run validation every N steps
+vld_iter: 500
+
+# checkpoints every N steps
+checkpoint_iter: 500
+
+experiment_dir: "exp1"
+checkpoint_dir: "exp1/checkpoints"
+
+# path to pre-trained weights to initialize model with before training
+pretrained_weights: null
+
+
+# ============
+# model config
+# ============
+batch_size: 8
+num_classes: 10
+learning_rate: 0.01
+data_dims: [32, 32, 3]
+weight_decay: 0.0005
