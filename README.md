@@ -1,11 +1,5 @@
-# tensorflow-vgg
-Re-implementation of VGG Network in tensorflow
-
-# setup
-
-```
-pip install pyyaml skimage skdata tensorflow-gpu
-```
+# CCR
+Classification of cervix cancer based on vgg
 
 # training
 
@@ -22,5 +16,5 @@ python train_model_parallel.py experiment.yaml
 # prediction
 
 ```
-python predict.py dog.jpg
+python predict.py image.jpg
 ```
