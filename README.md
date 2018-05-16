@@ -1,8 +1,6 @@
 # Recognition of High-grade Squamous Intraepithelial Lesion
 This repository includes the implementation of a classification system of HSIL (High-grade Squamous Intraepithelial Lesion) based on CNN architectures.
 
-[TOC]
-
 ## Introduction
 
 High-grade squamous intraepithelial lesion (HSIL or HGSIL) indicates moderate or severe cervical intraepithelial neoplasia or carcinoma in situ. It is usually diagnosed following a Pap test. In some cases these lesions can lead to invasive cervical cancer, if not followed appropriately.[1]
