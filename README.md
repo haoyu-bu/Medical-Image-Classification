@@ -1,7 +1,7 @@
 # Recognition of High-grade Squamous Intraepithelial Lesion
 This repository includes the implementation of a classification system of HSIL (High-grade Squamous Intraepithelial Lesion) based on CNN architectures.
 
-[Toc]
+[TOC]
 
 ## Introduction
 
