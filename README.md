@@ -32,7 +32,7 @@ python train.py config.yaml
 python predict.py image.jpg
 ```
 
-## Architectures and papers
+## References and papers
 
 - **Vgg19 Network**
     -  [Very Deep Convolutional Networks for Large-Scale Image Recognition][2]
@@ -46,8 +46,6 @@ python predict.py image.jpg
 - **DenseNet**
     -  [Densely Connected Convolutional Networks][7]
 
-
-## References
 
 [1]: https://en.wikipedia.org/wiki/Bethesda_system
 [2]: https://arxiv.org/abs/1409.1556
