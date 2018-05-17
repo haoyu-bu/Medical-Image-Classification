@@ -1,110 +1,45 @@
 import keras
 import math
 import numpy as np
-from keras.datasets import cifar10
 from keras.preprocessing.image import ImageDataGenerator
-from keras.layers.normalization import BatchNormalization
-from keras.layers import Conv2D, Dense, Input, add, Activation, AveragePooling2D, GlobalAveragePooling2D
-from keras.layers import Lambda, concatenate
-from keras.initializers import he_normal
-from keras.layers.merge import Concatenate
-from keras.callbacks import LearningRateScheduler, TensorBoard, ModelCheckpoint
+from keras.layers import Input, add, Activation
+from keras.callbacks import LearningRateScheduler, TensorBoard, ModelCheckpoint, Callback
 from keras.models import Model
 from keras import optimizers
-from keras import regularizers
 from keras.utils import plot_model
-import dataset
 import dataset_pca
 import os
 import tensorflow as tf
 import keras.backend.tensorflow_backend as KTF
+from sklearn.metrics import f1_score, precision_score, recall_score
+import argparse
+import densenet
+import resnext
+import resnet
+import vgg19
 
-growth_rate        = 12 
-depth              = 100
-compression        = 0.5
-
-img_rows, img_cols = 32, 32
+img_rows, img_cols = 224,224 
 img_channels       = 3
 num_classes        = 2 
-batch_size         = 16         # 64 or 32 or other
-epochs             = 300
-iterations         = 100       
-weight_decay       = 0.0001
+batch_size         = 32        # 64 or 32 or other
+epochs             = 130
+iterations         = 120      
 
-
-os.environ["CUDA_VISIBLE_DEVICES"]='3'
-
+os.environ["CUDA_VISIBLE_DEVICES"]='2'
 
 config = tf.ConfigProto()  
 config.gpu_options.allow_growth=True
 sess = tf.Session(config=config)
-
 KTF.set_session(sess)
 
-
 def scheduler(epoch):
-    if epoch <= 40:
+    if epoch <= 80:
         return 0.1
-    if epoch <= 150:
+    if epoch <= 120:
         return 0.01
-    if epoch <= 250:
+    if epoch <= 180:
         return 0.001
     return 0.0005
-
-def densenet(img_input,classes_num):
-
-    def bn_relu(x):
-        x = BatchNormalization()(x)
-        x = Activation('relu')(x)
-        return x
-
-    def bottleneck(x):
-        channels = growth_rate * 4
-        x = bn_relu(x)
-        x = Conv2D(channels,kernel_size=(1,1),strides=(1,1),padding='same',kernel_initializer=he_normal(),kernel_regularizer=regularizers.l2(weight_decay),use_bias=False)(x)
-        x = bn_relu(x)
-        x = Conv2D(growth_rate,kernel_size=(3,3),strides=(1,1),padding='same',kernel_initializer=he_normal(),kernel_regularizer=regularizers.l2(weight_decay),use_bias=False)(x)
-        return x
-
-    def single(x):
-        x = bn_relu(x)
-        x = Conv2D(growth_rate,kernel_size=(3,3),strides=(1,1),padding='same',kernel_initializer=he_normal(),kernel_regularizer=regularizers.l2(weight_decay),use_bias=False)(x)
-        return x
-
-    def transition(x, inchannels):
-        outchannels = int(inchannels * compression)
-        x = bn_relu(x)
-        x = Conv2D(outchannels,kernel_size=(1,1),strides=(1,1),padding='same',kernel_initializer=he_normal(),kernel_regularizer=regularizers.l2(weight_decay),use_bias=False)(x)
-        x = AveragePooling2D((2,2), strides=(2, 2))(x)
-        return x, outchannels
-
-    def dense_block(x,blocks,nchannels):
-        concat = x
-        for i in range(blocks):
-            x = bottleneck(concat)
-            concat = concatenate([x,concat], axis=-1)
-            nchannels += growth_rate
-        return concat, nchannels
-
-    def dense_layer(x):
-        return Dense(classes_num,activation='softmax',kernel_initializer=he_normal(),kernel_regularizer=regularizers.l2(weight_decay))(x)
-
-
-    nblocks = (depth - 4) // 6 
-    nchannels = growth_rate * 2
-
-    x = Conv2D(nchannels,kernel_size=(3,3),strides=(1,1),padding='same',kernel_initializer=he_normal(),kernel_regularizer=regularizers.l2(weight_decay),use_bias=False)(img_input)
-
-    x, nchannels = dense_block(x,nblocks,nchannels)
-    x, nchannels = transition(x,nchannels)
-    x, nchannels = dense_block(x,nblocks,nchannels)
-    x, nchannels = transition(x,nchannels)
-    x, nchannels = dense_block(x,nblocks,nchannels)
-    x, nchannels = transition(x,nchannels)
-    x = bn_relu(x)
-    x = GlobalAveragePooling2D()(x)
-    x = dense_layer(x)
-    return x
 
 def data_generator(x_train, y_train, batchsize=32):
     datagen1   = ImageDataGenerator(horizontal_flip=True,width_shift_range=0.125,height_shift_range=0.125,fill_mode='constant',cval=0.)
@@ -123,12 +58,39 @@ def data_generator(x_train, y_train, batchsize=32):
         batch_3 = next(dg_3)
         yield ([batch_1[0], batch_2[0], batch_3[0]], batch_1[1])
 
+class Metrics(Callback):
+    def on_train_begin(self, logs={}):
+        self.val_f1s = []
+        self.val_recalls_pos = []
+        self.val_recalls_neg = []
+        self.val_precisions = []
+
+    def on_epoch_end(self, epoch, logs={}):
+        val_predict = np.argmax((np.asarray(self.model.predict(
+            [self.validation_data[0], self.validation_data[1], self.validation_data[2]]))), axis=1)
+        val_targ = np.argmax(self.validation_data[3], axis=1)
+        _val_f1 = f1_score(val_targ, val_predict)
+        _val_recall_pos = recall_score(val_targ, val_predict, pos_label=1)
+        _val_recall_neg = recall_score(val_targ, val_predict, pos_label=0)
+        _val_precision = precision_score(val_targ, val_predict)
+        self.val_f1s.append(_val_f1)
+        self.val_recalls_pos.append(_val_recall_pos)
+        self.val_recalls_neg.append(_val_recall_neg)
+        self.val_precisions.append(_val_precision)
+        return
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("net", help="net used")
+    parser.add_argument("save_dir", help="save directory")
+    args = parser.parse_args()
+
 
     # load data
     (x_train, y_train), (x_test, y_test) = dataset_pca.get_data()
     y_train = keras.utils.to_categorical(y_train, num_classes)
     y_test  = keras.utils.to_categorical(y_test, num_classes)
+
 
     for j in range(3):
         x_train[j] = np.vstack(x_train[j]).reshape(-1,img_rows,img_cols,3).astype('float32')
@@ -138,12 +100,27 @@ if __name__ == '__main__':
     img_input_1 = Input(shape=(img_rows,img_cols,img_channels))
     img_input_2 = Input(shape=(img_rows,img_cols,img_channels))
     img_input_3 = Input(shape=(img_rows,img_cols,img_channels))
-    output_1    = densenet(img_input_1,num_classes)
-    output_2    = densenet(img_input_2,num_classes)
-    output_3    = densenet(img_input_3,num_classes)
-    output = keras.layers.Average()([output_1, output_2, output_3]) 
+
+    if(args.net == "densenet"):
+        output_1    = densenet.densenet(img_input_1,num_classes)
+        output_2    = densenet.densenet(img_input_2,num_classes)
+        output_3    = densenet.densenet(img_input_3,num_classes)
+    elif(args.net == "resnet"):
+        output_1    = resnet.resnet(img_input_1,num_classes)
+        output_2    = resnet.resnet(img_input_2,num_classes)
+        output_3    = resnet.resnet(img_input_3,num_classes)
+    elif(args.net == "resnext"):
+        output_1    = resnext.resnext(img_input_1,num_classes)
+        output_2    = resnext.resnext(img_input_2,num_classes)
+        output_3    = resnext.resnext(img_input_3,num_classes)
+    elif(args.net == "vgg19"):
+        output_1    = vgg19.vgg19(img_input_1,num_classes)
+        output_2    = vgg19.vgg19(img_input_2,num_classes)
+        output_3    = vgg19.vgg19(img_input_3,num_classes)
+    output = keras.layers.Add()([output_1, output_2, output_3, output_3, output_2, output_3])
+    output = Activation('softmax')(output)
     model     = Model([img_input_1, img_input_2, img_input_3], output)
-    #model.load_weights('densenet.h5')
+    #model.load_weights('ckpt.h5')
     
     plot_model(model, show_shapes=True, to_file='model.png')
     print(model.summary())
@@ -153,10 +130,11 @@ if __name__ == '__main__':
     model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
 
     # set callback
-    tb_cb     = TensorBoard(log_dir='./densenet/', histogram_freq=0)
+    metrics = Metrics()
+    tb_cb     = TensorBoard(log_dir=args.save_dir, histogram_freq=0)
     change_lr = LearningRateScheduler(scheduler)
-    ckpt      = ModelCheckpoint('./ckpt.h5', save_best_only=False, mode='auto', period=10)
-    cbks      = [change_lr,tb_cb,ckpt]
+    ckpt      = ModelCheckpoint(os.join(args.save_dir, './ckpt.h5'), save_best_only=False, mode='auto', period=10)
+    cbks      = [change_lr,tb_cb,ckpt,metrics]
 
     # set data augmentation
     print('Using real-time data augmentation.')
@@ -164,4 +142,10 @@ if __name__ == '__main__':
 
     # start training
     model.fit_generator(data_generator, steps_per_epoch=iterations, epochs=epochs, callbacks=cbks,validation_data=([x_test[0], x_test[1], x_test[2]], y_test))
-    model.save('densenet.h5')
+    for i in range(epochs):
+        print "epoch" + str(i)
+        print(metrics.val_recalls_pos)
+        print(metrics.val_recalls_neg)
+        print(metrics.val_precisions)
+        print(metrics.val_f1s)
+    model.save(os.join(args.save_dir, 'densenet.h5'))
