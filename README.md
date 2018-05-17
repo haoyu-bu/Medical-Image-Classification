@@ -23,13 +23,13 @@ We focus on classificaiton of  the above three types of colposcope images from P
 
 * Train
 ```
-python train.py net save_dir
+python train.py -net -save_dir
 ```
 
 * Predict
 
 ```
-python predict.py weight_model image_dir
+python predict.py -weight_model -image_dir
 ```
 
 ## References and papers
