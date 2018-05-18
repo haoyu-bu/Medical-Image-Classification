@@ -7,7 +7,7 @@ from keras.callbacks import LearningRateScheduler, TensorBoard, ModelCheckpoint,
 from keras.models import Model
 from keras import optimizers
 from keras.utils import plot_model
-import dataset_pca
+import dataset
 import os
 import tensorflow as tf
 import keras.backend.tensorflow_backend as KTF
@@ -87,7 +87,7 @@ if __name__ == '__main__':
 
 
     # load data
-    (x_train, y_train), (x_test, y_test) = dataset_pca.get_data()
+    (x_train, y_train), (x_test, y_test) = dataset.get_data()
     y_train = keras.utils.to_categorical(y_train, num_classes)
     y_test  = keras.utils.to_categorical(y_test, num_classes)
 
