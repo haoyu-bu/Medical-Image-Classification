@@ -15,7 +15,7 @@ We focus on classificaiton of  the above three types of colposcope images from P
 
 ## Requirements
 
-- Python (3.5.2)
+- Python (2.7.14)
 - Keras (2.0.5)
 - tensorflow (1.4.0)
 
@@ -23,13 +23,13 @@ We focus on classificaiton of  the above three types of colposcope images from P
 
 * Train
 ```
-python train.py config.yaml
+python train.py -net -save_dir
 ```
 
 * Predict
 
 ```
-python predict.py image.jpg
+python predict.py -weight_model -image_dir
 ```
 
 ## References and papers
@@ -39,18 +39,15 @@ python predict.py image.jpg
 - **Residual Network**
     -  [Deep Residual Learning for Image Recognition][3]
     -  [Identity Mappings in Deep Residual Networks][4]
-- **Wide Residual Network**
-    -  [Wide Residual Networks][5]
 - **ResNeXt**  
-    -  [Aggregated Residual Transformations for Deep Neural Networks][6]
+    -  [Aggregated Residual Transformations for Deep Neural Networks][5]
 - **DenseNet**
-    -  [Densely Connected Convolutional Networks][7]
+    -  [Densely Connected Convolutional Networks][6]
 
 
 [1]: https://en.wikipedia.org/wiki/Bethesda_system
 [2]: https://arxiv.org/abs/1409.1556
 [3]: https://arxiv.org/abs/1512.03385
 [4]: https://arxiv.org/abs/1603.05027
-[5]: https://arxiv.org/abs/1605.07146
-[6]: https://arxiv.org/abs/1611.05431
-[7]: https://arxiv.org/abs/1608.06993
+[5]: https://arxiv.org/abs/1611.05431
+[6]: https://arxiv.org/abs/1608.06993
