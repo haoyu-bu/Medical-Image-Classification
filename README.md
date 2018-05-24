@@ -35,7 +35,7 @@ python predict.py -weight_model -image_dir
 ## References and papers
 
 - **Vgg19 Network**
-    -  [Very Deep Convolutional Networks for Large-Scale Image Recognition][2]
+    -  [Very Deep Convolutional Networks for Large-Scale Image Recognition][2]
 - **Residual Network**
     -  [Deep Residual Learning for Image Recognition][3]
     -  [Identity Mappings in Deep Residual Networks][4]
@@ -43,6 +43,8 @@ python predict.py -weight_model -image_dir
     -  [Aggregated Residual Transformations for Deep Neural Networks][5]
 - **DenseNet**
     -  [Densely Connected Convolutional Networks][6]
+-  **SENet**
+    - [Squeeze-and-Excitation Networks][7]
 
 
 [1]: https://en.wikipedia.org/wiki/Bethesda_system
@@ -51,3 +53,4 @@ python predict.py -weight_model -image_dir
 [4]: https://arxiv.org/abs/1603.05027
 [5]: https://arxiv.org/abs/1611.05431
 [6]: https://arxiv.org/abs/1608.06993
+[7]: https://arxiv.org/abs/1709.01507
